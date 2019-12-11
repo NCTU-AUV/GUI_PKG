@@ -123,7 +123,7 @@ class Main():
         yaw_digit,yaw_num = get_digit(yaw)
         combox_num = range(-5,5,1)
         tk.Label(scale_frame, text = 'yaw tune').grid(row=7, column=0)
-        self.s_y = tk.Scale(scale_frame,from_=0,to=9.99,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=3,resolution=0.01,command=print_selec_value)
+        self.s_y = tk.Scale(scale_frame,from_=-10,to=10,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=5,resolution=0.01,command=print_selec_value)
         self.s_y.set(yaw_num)
         self.s_y.grid(row=7, column=1)
         self.combo_y = ttk.Combobox(scale_frame, values=combox_num,width=5)
@@ -172,7 +172,8 @@ class Main():
         data.append(self.s_d_D.get()*10**float(self.combo_d_D.get()))
         dict_data = {'/PIDpara/depth':data}
         print dict_data
-        with open(r'/home/eason27271563/catkin_ws/src/beginner_tutorials/config/depth.yaml','w+') as f:
+
+        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/depth.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def dump_altitude(self):
         data = []
@@ -181,14 +182,14 @@ class Main():
         data.append(self.s_a_D.get()*10**float(self.combo_a_D.get()))
         dict_data = {'/PIDpara/altitude':data}
         print dict_data
-        with open(r'/home/eason27271563/catkin_ws/src/beginner_tutorials/config/altitude.yaml','w+') as f:
+        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/altitude.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def dump_yaw(self):
         data=self.s_y.get()*10**float(self.combo_y.get())
         print data
         dict_data = {'/tune/yaw':data}
         print dict_data
-        with open(r'/home/eason27271563/catkin_ws/src/beginner_tutorials/config/yaw_tune.yaml','w+') as f:
+        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/yaw_tune.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def depth_back(self,data):
         #print(data.data)

@@ -241,7 +241,7 @@ class Page3(Page):
 	'''
 	def Euler_update(self,data):
 		if self.Euler_update_on == 1:
-			if self.counter >6:
+			if self.counter >20:
 				self.x[0]=data.data[0]*math.pi/180.
 				self.x[1]=data.data[1]*math.pi/180.
 				#self.x[2]=data.data[2]*math.pi/180.
