@@ -39,6 +39,7 @@ def get_digit(data):
 class Main():
     def __init__(self):
         rospy.init_node('para_tune',anonymous=True)
+        self.state_changer = rospy.Publisher('/AUVmanage/state',Int32,queue_size=1)
         win = tk.Tk()
         win.title('Dummy motor')
         win.wm_geometry("1500x600")
@@ -46,6 +47,8 @@ class Main():
         scale_frame.grid(row = 1 ,column = 1)
         graph = tk.Frame(win)
         graph.grid(row = 1 ,column = 2)
+        start_frame = tk.Frame(win)
+        start_frame.grid(row = 1,column =3)
         ################################################################################
         #                               depth PID                                      #
         ################################################################################
@@ -140,13 +143,19 @@ class Main():
         self.ddata =  np.zeros(100)
         self.depth_fig =Figure(figsize=(5,3), dpi=100)
         self.depth_ax=self.depth_fig.add_subplot(111)
-        self.depth_ax.set_ylim((0, 5))
+        self.depth_ax.set_ylim((0, 2))
+        self.depth_ax.invert_yaxis()
         self.depth_ax.set_title("depth")
         self.canvas_d =FigureCanvasTkAgg(self.depth_fig, master=graph)
         self.canvas_d.show()
         self.canvas_d.get_tk_widget().pack(side=tk.TOP,fill="both")
         rospy.Subscriber("/depth", Float32, self.depth_back, queue_size=1)
-        scale_frame.mainloop()
+        ################################################################################
+        #                               kill bottom                                    #
+        ################################################################################
+        self.start_button = tk.Button(start_frame,  text='Press to start', command=self.state2one).grid(row = 7 ,column = 7)
+        self.stop_button = tk.Button(start_frame,  text='Press to stop', command=self.state2zero).grid(row = 8 ,column = 7)
+        win.mainloop()
     def set_depth(self):
         data = []
         data.append(self.s_d_P.get()*10**float(self.combo_d_P.get()))
@@ -195,25 +204,29 @@ class Main():
         #print(data.data)
         if self.x_count>99:
             self.x_count+=1
-            
             self.ddata=np.roll(self.ddata,-1)
             self.ddata[99]=data.data
             self.depth_x=np.roll(self.depth_x,-1)
             self.depth_x[99]=self.depth_x[98]+1
             self.depth_ax.cla()
             self.depth_ax.set_xlim((self.depth_x[0], self.depth_x[99]))
-            self.depth_ax.set_ylim((0, 5))
+            self.depth_ax.set_ylim((0, 2))
+            self.depth_ax.invert_yaxis()
             self.depth_ax.plot(self.depth_x,self.ddata)
             print(self.depth_x[99])
         else:
             self.ddata[self.x_count]=data.data
             self.x_count+=1
-            
             self.depth_ax.cla()
-            self.depth_ax.set_ylim((0, 5))
+            self.depth_ax.set_ylim((0, 2))
+            self.depth_ax.invert_yaxis()
             self.depth_ax.plot(self.depth_x,self.ddata)
         self.depth_ax.set_title("depth")
         self.canvas_d.draw()
+    def state2one(self):
+        self.state_changer.publish(Int32(data = 1))
+    def state2zero(self):
+        self.state_changer.publish(Int32(data = 0))
 if __name__ == "__main__":
     try:
         Main()
