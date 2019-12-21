@@ -41,7 +41,7 @@ class Main():
         rospy.init_node('para_tune',anonymous=True)
         win = tk.Tk()
         win.title('Dummy motor')
-        win.wm_geometry("1500x600")
+        win.wm_geometry("1500x1000")
         scale_frame = tk.Frame(win)
         scale_frame.grid(row = 1 ,column = 1)
         graph = tk.Frame(win)
@@ -173,7 +173,7 @@ class Main():
         dict_data = {'/PIDpara/depth':data}
         print dict_data
 
-        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/depth.yaml','w+') as f:
+        with open(r'/home/eason/catkin_ws/src/auv_control/config/depth.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def dump_altitude(self):
         data = []
@@ -182,14 +182,14 @@ class Main():
         data.append(self.s_a_D.get()*10**float(self.combo_a_D.get()))
         dict_data = {'/PIDpara/altitude':data}
         print dict_data
-        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/altitude.yaml','w+') as f:
+        with open(r'/home/eason/catkin_ws/src/auv_control/config/altitude.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def dump_yaw(self):
         data=self.s_y.get()*10**float(self.combo_y.get())
         print data
         dict_data = {'/tune/yaw':data}
         print dict_data
-        with open(r'/home/nctu-auv/catkin_ws/src/auv_control/config/yaw_tune.yaml','w+') as f:
+        with open(r'/home/eason/catkin_ws/src/auv_control/config/yaw_tune.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
     def depth_back(self,data):
         #print(data.data)

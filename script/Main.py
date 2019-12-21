@@ -188,7 +188,7 @@ class Page3(Page):
 		self.Euler_update_on = 1
 		self.counter = 0
 		rospy.Subscriber("/Eular", Float32MultiArray, self.Euler_update,queue_size=1)
-		fig = Figure(figsize=(10, 10), dpi=50) 
+		fig = Figure(figsize=(30, 30), dpi=50) 
 		canvas = FigureCanvasTkAgg(fig, master=self)
 		canvas.draw()
 		self.x = [0,0,0]    #Eular angle X ,Y,Z
@@ -242,8 +242,8 @@ class Page3(Page):
 	def Euler_update(self,data):
 		if self.Euler_update_on == 1:
 			if self.counter >10:
-				self.x[0]=data.data[0]*math.pi/180.
-				self.x[1]=data.data[1]*math.pi/180.
+				self.x[0]=-data.data[0]*math.pi/180.
+				self.x[1]=-data.data[1]*math.pi/180.
 				#self.x[2]=data.data[2]*math.pi/180.
 				self.x[2]=0
 				Re_Canvasdraw(self.x,self.ax)
@@ -283,7 +283,7 @@ def GUI():
 	root = tk.Tk()
 	main = MainView(root)
 	main.pack(side="top", fill="both", expand=True)
-	root.wm_geometry("1500x1000")
+	root.wm_geometry("1500x1500")
 	root.mainloop()
 	cv2.destroyAllWindows()
 if __name__ == "__main__":
