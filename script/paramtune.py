@@ -153,8 +153,9 @@ class Main():
         ################################################################################
         #                               kill bottom                                    #
         ################################################################################
-        self.start_button = tk.Button(start_frame,  text='Press to start', command=self.state2one).grid(row = 7 ,column = 7)
-        self.stop_button = tk.Button(start_frame,  text='Press to stop', command=self.state2zero).grid(row = 8 ,column = 7)
+        self.start_button = tk.Button(start_frame,  text='Press to start', command=self.state2one).grid(row = 1 ,column = 1)
+        self.stop_button = tk.Button(start_frame,  text='Press to stop', command=self.state2zero).grid(row = 1 ,column = 2)
+        self.stop_button = tk.Button(start_frame,  text='stop but count', command=self.state2two).grid(row = 1 ,column = 3)
         win.mainloop()
     def set_depth(self):
         data = []
@@ -213,7 +214,7 @@ class Main():
             self.depth_ax.set_ylim((0, 2))
             self.depth_ax.invert_yaxis()
             self.depth_ax.plot(self.depth_x,self.ddata)
-            print(self.depth_x[99])
+            #print(self.depth_x[99])
         else:
             self.ddata[self.x_count]=data.data
             self.x_count+=1
@@ -227,6 +228,8 @@ class Main():
         self.state_changer.publish(Int32(data = 1))
     def state2zero(self):
         self.state_changer.publish(Int32(data = 0))
+    def state2two(self):
+        self.state_changer.publish(Int32(data = 2))
 if __name__ == "__main__":
     try:
         Main()
