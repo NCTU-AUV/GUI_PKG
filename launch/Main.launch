@@ -1,0 +1,5 @@
+<launch>
+ 	<node name="paramtune" pkg="auv_gui" type="paramtune.py"></node>
+ 	<node name="Show_motor" pkg="auv_gui" type="Show_motor.py"></node>
+	<node name="Main_page" pkg="auv_gui" type="Main.py"></node>
+</launch>

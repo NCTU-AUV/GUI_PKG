@@ -4,6 +4,7 @@ import numpy as np
 import rospy
 from std_msgs.msg import Float32
 from std_msgs.msg import Float32MultiArray 
+from std_msgs.msg import Int32MultiArray 
 from std_msgs.msg import Int32
 import time
 import traceback
@@ -40,9 +41,10 @@ class Main():
     def __init__(self):
         rospy.init_node('para_tune',anonymous=True)
         self.state_changer = rospy.Publisher('/AUVmanage/state',Int32,queue_size=1)
+        self.call_param_dump = rospy.Publisher('/AUVmanage/dumpparam',Int32,queue_size=1)
         win = tk.Tk()
         win.title('Dummy motor')
-        win.wm_geometry("1500x1000")
+        win.wm_geometry("3000x2000")
         scale_frame = tk.Frame(win)
         scale_frame.grid(row = 1 ,column = 1)
         graph = tk.Frame(win)
@@ -122,8 +124,18 @@ class Main():
         ################################################################################
         #                               yaw tune                                   #
         ################################################################################
-        yaw=rospy.get_param('/tune/yaw')
-        yaw_digit,yaw_num = get_digit(yaw)
+        yaw=rospy.get_param('/PIDpara/yaw')
+        if yaw[0]>=0:
+            yaw_digit,yaw_num = get_digit(yaw[0])
+        else:
+            yaw_digit,yaw_num = get_digit(-yaw[0])
+            yaw_num = -yaw_num
+        yaw_PID_digit = []
+        yaw_PID_num = []
+        for i in yaw[1:]:
+            a,b = get_digit(i)
+            yaw_PID_digit.append(a)
+            yaw_PID_num.append(b)
         combox_num = range(-5,5,1)
         tk.Label(scale_frame, text = 'yaw tune').grid(row=7, column=0)
         self.s_y = tk.Scale(scale_frame,from_=-10,to=10,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=5,resolution=0.01,command=print_selec_value)
@@ -132,6 +144,29 @@ class Main():
         self.combo_y = ttk.Combobox(scale_frame, values=combox_num,width=5)
         self.combo_y.current(yaw_digit+5)
         self.combo_y.grid(row=7,column=2)
+
+        tk.Label(scale_frame, text = 'yaw_P').grid(row=8, column=0)
+        self.s_y_P = tk.Scale(scale_frame,from_=0,to=9.99,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=3,resolution=0.01,command=print_selec_value)
+        self.s_y_P.set(yaw_PID_num[0])
+        self.s_y_P.grid(row=8, column=1)
+        self.combo_y_P = ttk.Combobox(scale_frame, values=combox_num,width=5)
+        self.combo_y_P.current(yaw_PID_digit[0]+5)
+        self.combo_y_P.grid(row=8,column=2)
+        tk.Label(scale_frame, text = 'yaw_I').grid(row=9, column=0)
+        self.s_y_I = tk.Scale(scale_frame,from_=0,to=9.99,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=3,resolution=0.01,command=print_selec_value)
+        self.s_y_I.set(yaw_PID_num[1])
+        self.s_y_I.grid(row=9 ,column=1)
+        self.combo_y_I = ttk.Combobox(scale_frame, values=combox_num,width=5)
+        self.combo_y_I.current(altitude_PID_digit[1]+5)
+        self.combo_y_I.grid(row=9,column=2)  
+        tk.Label(scale_frame, text = 'yaw_D').grid(row=10, column=0)
+        self.s_y_D = tk.Scale(scale_frame,from_=0,to=9.99,orient=tk.HORIZONTAL,length=200,showvalue=1,tickinterval=3,resolution=0.01,command=print_selec_value)
+        self.s_y_D.set(altitude_PID_num[2])
+        self.s_y_D.grid(row=10 ,column=1)
+        self.combo_y_D = ttk.Combobox(scale_frame, values=combox_num,width=5)
+        self.combo_y_D.current(altitude_PID_digit[2]+5)
+        self.combo_y_D.grid(row=10,column=2) 
+
         tk.Button(scale_frame,  text='set yaw tune param', command=self.set_yaw).grid(row = 7 ,column = 5)
         tk.Button(scale_frame,  text='dump yaw tune param', command=self.dump_yaw).grid(row = 8 ,column = 5)
         ################################################################################
@@ -153,9 +188,17 @@ class Main():
         ################################################################################
         #                               kill bottom                                    #
         ################################################################################
-        self.start_button = tk.Button(start_frame,  text='Press to start', command=self.state2one).grid(row = 1 ,column = 1)
-        self.stop_button = tk.Button(start_frame,  text='Press to stop', command=self.state2zero).grid(row = 1 ,column = 2)
-        self.stop_button = tk.Button(start_frame,  text='stop but count', command=self.state2two).grid(row = 1 ,column = 3)
+        self.countdowner = rospy.Publisher('/AUVmanage/countdowner',Int32MultiArray,queue_size=1)
+        self.e= tk.Entry(start_frame)
+        self.e.grid(row=1,column=1)
+        self.cd_remaining =0
+        self.countdown_label = tk.Label(start_frame, text="", width=10)
+        self.countdown_label.grid(row =1,column=2)
+        self.coutdown_var = 0
+        self.start_button = tk.Button(start_frame,  text='Press to start', command=self.state2one).grid(row = 2 ,column = 1)
+        self.stop_button = tk.Button(start_frame,  text='Press to stop', command=self.state2zero).grid(row = 2 ,column = 2)
+        self.stop_button = tk.Button(start_frame,  text='stop but count', command=self.state2two).grid(row = 2 ,column = 3)
+        self.stop_button = tk.Button(start_frame,  text='go forward', command=self.state2three).grid(row = 2 ,column = 4)
         win.mainloop()
     def set_depth(self):
         data = []
@@ -172,20 +215,29 @@ class Main():
         print data
         rosparam.set_param('/PIDpara/altitude', str(data))
     def set_yaw(self):
-        data=self.s_y.get()*10**float(self.combo_y.get())
+        data = []
+        data.append(self.s_y.get()*10**float(self.combo_y.get()))
+        data.append(self.s_y_P.get()*10**float(self.combo_a_P.get()))
+        data.append(self.s_y_I.get()*10**float(self.combo_a_I.get()))
+        data.append(self.s_y_D.get()*10**float(self.combo_a_D.get()))
+        
         print data
-        rosparam.set_param('/tune/yaw', str(data))
+        rosparam.set_param('/PIDpara/yaw', str(data))
     def dump_depth(self):
+        self.call_param_dump.publish(Int32(data = 1))
+        '''
         data = []
         data.append(self.s_d_P.get()*10**float(self.combo_d_P.get()))
         data.append(self.s_d_I.get()*10**float(self.combo_d_I.get()))
         data.append(self.s_d_D.get()*10**float(self.combo_d_D.get()))
         dict_data = {'/PIDpara/depth':data}
         print dict_data
-
         with open(r'/home/eason/catkin_ws/src/auv_control/config/depth.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
+        '''
     def dump_altitude(self):
+        self.call_param_dump.publish(Int32(data = 0))
+        '''
         data = []
         data.append(self.s_a_P.get()*10**float(self.combo_a_P.get()))
         data.append(self.s_a_I.get()*10**float(self.combo_a_I.get()))
@@ -194,13 +246,17 @@ class Main():
         print dict_data
         with open(r'/home/eason/catkin_ws/src/auv_control/config/altitude.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
+        '''
     def dump_yaw(self):
+        self.call_param_dump.publish(Int32(data = 2))
+        '''
         data=self.s_y.get()*10**float(self.combo_y.get())
         print data
         dict_data = {'/tune/yaw':data}
         print dict_data
         with open(r'/home/eason/catkin_ws/src/auv_control/config/yaw_tune.yaml','w+') as f:
             print yaml.dump(dict_data,f, default_flow_style = False)
+        '''
     def depth_back(self,data):
         #print(data.data)
         if self.x_count>99:
@@ -225,11 +281,26 @@ class Main():
         self.depth_ax.set_title("depth")
         self.canvas_d.draw()
     def state2one(self):
-        self.state_changer.publish(Int32(data = 1))
+        var=int(self.e.get())
+        self.countdowner.publish(Int32MultiArray(data = [1,var]))
+        self.countdown(var)
     def state2zero(self):
         self.state_changer.publish(Int32(data = 0))
     def state2two(self):
         self.state_changer.publish(Int32(data = 2))
+    def state2three(self):
+        var=int(self.e.get())
+        self.countdowner.publish(Int32MultiArray(data = [3,var]))
+        self.countdown(var)
+    def countdown(self,remaining = None):
+        if remaining is not None:
+            self.cd_remaining = remaining
+        if self.cd_remaining <= 0.1:
+            self.countdown_label.configure(text="time's up!")
+        else:
+            self.countdown_label.configure(text=str(self.cd_remaining))
+            self.cd_remaining = self.cd_remaining - 0.1
+            self.countdown_label.after(100, self.countdown)
 if __name__ == "__main__":
     try:
         Main()
